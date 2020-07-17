@@ -1,0 +1,1 @@
+# sb-cordova-plugin-sync
