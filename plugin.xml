@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+    id="sb-cordova-plugin-sync"
+    version="0.0.1">
+    <name>A native  plugin to sync telemetry,assesment and course progress </name>
+    <description></description>
+    <license>MIT</license>
+    <keywords></keywords>
+    <js-module src="www/plugin.js" name="SBSYNC">
+        <clobbers target="sbsync" />
+    </js-module>
+    
+    <!-- android -->
+    <platform name="android">
+      <config-file target="res/xml/config.xml" parent="/*">
+        <feature name="sbsync">
+          <param name="android-package" value="org.sunbird.sync.SyncPlugin" />
+          <param name="onload" value="true" />
+        </feature>
+      </config-file>
+       <source-file src="src/android/org/sunbird/sync/SyncPlugin.java" target-dir="src/org/sunbird/sync" />
+       <source-file src="src/android/org/sunbird/sync/db/DbService.java" target-dir="src/org/sunbird/sync/db" />
+       <source-file src="src/android/org/sunbird/sync/db/DbServiceImpl.java" target-dir="src/org/sunbird/sync/db" />
+       <source-file src="src/android/org/sunbird/sync/model/HttpResponse.java" target-dir="src/org/sunbird/sync/model" />
+       <source-file src="src/android/org/sunbird/sync/model/NetworkQueueModel.java" target-dir="src/org/sunbird/sync/model" />
+       <source-file src="src/android/org/sunbird/sync/model/Request.java" target-dir="src/org/sunbird/sync/model" />
+       <source-file src="src/android/org/sunbird/sync/network/ApiService.java" target-dir="src/org/sunbird/sync/network" />
+       <source-file src="src/android/org/sunbird/sync/network/ApiServiceImpl.java" target-dir="src/org/sunbird/sync/network" />
+       <source-file src="src/android/org/sunbird/sync/network/HttpOperation.java" target-dir="src/org/sunbird/sync/network" />
+       <source-file src="src/android/org/sunbird/sync/queue/NetworkQueue.java" target-dir="src/org/sunbird/sync/queue" />
+       <source-file src="src/android/org/sunbird/sync/queue/NetworkQueueImpl.java" target-dir="src/org/sunbird/sync/queue" />
+       <source-file src="src/android/org/sunbird/sync/preference/PreferenceService.java" target-dir="src/org/sunbird/sync/preference" />
+       <source-file src="src/android/org/sunbird/sync/preference/PreferenceServiceImpl.java" target-dir="src/org/sunbird/sync/preference" />
+    </platform>
+</plugin>
+
