@@ -1,0 +1,17 @@
+{
+  "name": "sb-cordova-plugin-sync",
+  "version": "0.0.1",
+  "description": "",
+  "cordova": {
+    "id": "sb-cordova-plugin-sync",
+    "platforms": [
+      "android"
+    ]
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android"
+  ],
+  "author": "",
+  "license": "MIT"
+}
