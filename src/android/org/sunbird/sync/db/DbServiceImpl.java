@@ -12,7 +12,7 @@ import org.sunbird.db.SunbirdDBHelper;
 public class DbServiceImpl implements DbService {
     @Override
     public JSONArray seed() throws JSONException {
-        JSONArray resultArray = getOperator().execute("SELECT * from network_queue");
+        JSONArray resultArray = getOperator().execute("SELECT * from network_queue order by priority");
         return resultArray;
     }
 
