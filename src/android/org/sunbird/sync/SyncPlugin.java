@@ -90,7 +90,9 @@ public class SyncPlugin extends CordovaPlugin {
                                 if (networkQueueModel.getRequest().getNoOfFailureSync() >= 2) {
                                     if(!isUnauthorizedErrorThrown){
                                         isUnauthorizedErrorThrown = true;
-                                        publishAuthErrorEvents(httpResponse.getError(), httpResponse.getStatus());
+                                        if(!isSameToken(networkQueueModel.getRequest(), httpResponse)){
+                                            publishAuthErrorEvents(httpResponse.getError(), httpResponse.getStatus());
+                                        }
                                         handleUnAuthorizedError(networkQueueModel, httpResponse);
                                         mNetworkQueue.dequeue(true);
                                     } else{
@@ -204,7 +206,7 @@ public class SyncPlugin extends CordovaPlugin {
         Request request = networkQueueModel.getRequest();
         JSONObject headers = request.getHeaders();
         
-        if (isKongTokenExpired(httpResponse.getError(), httpResponse.getStatus())) {
+        if (isApiTokenExpired(httpResponse.getError(), httpResponse.getStatus())) {
             headers.put("Authorization", "Bearer " + mPreferenceService.getBearerToken());
         } else {
             if (mPreferenceService.getUserToken() != null) {
@@ -221,7 +223,7 @@ public class SyncPlugin extends CordovaPlugin {
         mDbService.update("msg_id", new String[]{networkQueueModel.getId()}, model);
     }
 
-    private boolean isKongTokenExpired(String error, int statusCode){
+    private boolean isApiTokenExpired(String error, int statusCode){
         try {
             JSONObject errorObject = new JSONObject(error);
             if (!TextUtils.isEmpty(error)) {
@@ -276,13 +278,29 @@ public class SyncPlugin extends CordovaPlugin {
         mLastEvent = null;
     }
 
+    private boolean isSameToken(Request request, HttpResponse httpResponse) {
+        String tokenInApp = null;
+        String tokenInRequest = null;
+        if (isApiTokenExpired(httpResponse.getError(), httpResponse.getStatus())) {
+            tokenInApp = "Bearer " + mPreferenceService.getBearerToken();
+            tokenInRequest = request.getHeaders().optString("Authorization");
+        } else {
+            if (mPreferenceService.getUserToken() != null) {
+                tokenInApp = mPreferenceService.getUserToken();
+                tokenInRequest = request.getHeaders().optString("X-Authenticated-User-Token");
+            }
+        }
+        return (tokenInApp != null && tokenInRequest != null && tokenInApp.equalsIgnoreCase(tokenInRequest));
+
+    }
+
     private void publishAuthErrorEvents(String error, int statusCode) throws JSONException{
         if (this.mLiveHandler.size() == 0) {
             return;
         }
 
         JSONObject liveJsonObject = new JSONObject();
-        liveJsonObject.put("network_queue_error", isKongTokenExpired(error, statusCode) ? "KONG_TOKEN_EXPIRED" : "USER_TOKEN_EXPIRED");
+        liveJsonObject.put("network_queue_error", isApiTokenExpired(error, statusCode) ? "API_TOKEN_EXPIRED" : "USER_TOKEN_EXPIRED");
 
         for (CallbackContext callback : this.mLiveHandler) {
             final PluginResult result = new PluginResult(PluginResult.Status.OK, liveJsonObject);
