@@ -60,14 +60,17 @@ public class NetworkQueueModel implements Comparable<NetworkQueueModel>{
 
     @Override
     public int compareTo(NetworkQueueModel networkQueueModel) {
+        int currentFailedSyncCount = this.getRequest().getNoOfFailureSync();
+        int failedSyncCount = networkQueueModel.getRequest().getNoOfFailureSync();
 
-        int priority1 = this.getPriority();
-        int priority2 = networkQueueModel.getPriority();
+        int currentPriority = this.getPriority() + currentFailedSyncCount;
+        int priority = networkQueueModel.getPriority() + failedSyncCount;
 
-        if (priority2 < priority1)
+        if (priority < currentPriority) {
             return 1;
-        if (priority2 > priority1)
+        } else if (priority > currentPriority) {
             return -1;
+        }
 
         return 0;
     }

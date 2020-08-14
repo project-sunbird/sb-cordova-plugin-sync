@@ -12,6 +12,9 @@ var sbsync = {
     },
     onSyncSucces: function(success, error) {
         exec(success, error, PLUGIN_NAME, "onSyncSucces", []);
+    },
+    onAuthorizationError: function(success, error) {
+        exec(success, error, PLUGIN_NAME, "onAuthorizationError", []);
     }
 };
 

@@ -1,5 +1,6 @@
 package org.sunbird.sync;
 
+import android.text.TextUtils;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;
@@ -35,6 +36,7 @@ public class SyncPlugin extends CordovaPlugin {
     private PreferenceService mPreferenceService;
     private boolean isSyncing;
     private ArrayList<CallbackContext> mHandler = new ArrayList<>();
+    private ArrayList<CallbackContext> mLiveHandler = new ArrayList<>();
     private JSONObject mLastEvent;
     private boolean isUnauthorizedErrorThrown;
 
@@ -57,6 +59,9 @@ public class SyncPlugin extends CordovaPlugin {
             return true;
         } else if (action.equals("onSyncSucces")) {
             mHandler.add(callbackContext);
+            return true;
+        } else if (action.equals("onAuthorizationError")) {
+            mLiveHandler.add(callbackContext);
             return true;
         }
 
@@ -85,7 +90,9 @@ public class SyncPlugin extends CordovaPlugin {
                                 if (networkQueueModel.getRequest().getNoOfFailureSync() >= 2) {
                                     if(!isUnauthorizedErrorThrown){
                                         isUnauthorizedErrorThrown = true;
-                                        publishEvent("network_queue_error", "UnAuthorized");
+                                        if(!isSameToken(networkQueueModel.getRequest(), httpResponse)){
+                                            publishAuthErrorEvents(httpResponse.getError(), httpResponse.getStatus());
+                                        }
                                         handleUnAuthorizedError(networkQueueModel, httpResponse);
                                         mNetworkQueue.dequeue(true);
                                     } else{
@@ -121,20 +128,6 @@ public class SyncPlugin extends CordovaPlugin {
                 }
             }
         });
-    }
-
-    private void updateFailureCount(NetworkQueueModel networkQueueModel) throws JSONException{
-        if (networkQueueModel.getRequest().getNoOfFailureSync() >= 5 ) {
-            mNetworkQueue.dequeue(false);
-        } else {
-            Request request = networkQueueModel.getRequest();
-            int noOfFailureSyncs = request.getNoOfFailureSync() + 1;
-            request.setNoOfFailureSync(noOfFailureSyncs++);
-            JSONObject model = new JSONObject();
-            model.put("request", request.toJSON().toString());
-            mDbService.update("msg_id", new String[]{networkQueueModel.getId()}, model);
-            mNetworkQueue.dequeue(true);
-        }
     }
 
     private void handlePostAPIActions(String type, HttpResponse httpResponse) throws JSONException {
@@ -212,13 +205,8 @@ public class SyncPlugin extends CordovaPlugin {
     private void handleUnAuthorizedError(NetworkQueueModel networkQueueModel, HttpResponse httpResponse) throws JSONException {
         Request request = networkQueueModel.getRequest();
         JSONObject headers = request.getHeaders();
-        String response = httpResponse.getError();
-        JSONObject responseObject = null;
-        if (response != null) {
-            responseObject = new JSONObject(response);
-        }
-
-        if ((responseObject != null && "Unauthorized".equalsIgnoreCase(responseObject.optString("message"))) || httpResponse.getStatus() == 403) {
+        
+        if (isApiTokenExpired(httpResponse.getError(), httpResponse.getStatus())) {
             headers.put("Authorization", "Bearer " + mPreferenceService.getBearerToken());
         } else {
             if (mPreferenceService.getUserToken() != null) {
@@ -233,6 +221,20 @@ public class SyncPlugin extends CordovaPlugin {
         JSONObject model = new JSONObject();
         model.put("request", request.toJSON().toString());
         mDbService.update("msg_id", new String[]{networkQueueModel.getId()}, model);
+    }
+
+    private boolean isApiTokenExpired(String error, int statusCode){
+        try {
+            JSONObject errorObject = new JSONObject(error);
+            if (!TextUtils.isEmpty(error)) {
+                errorObject = new JSONObject(error);
+            }
+            return (errorObject != null && "Unauthorized".equalsIgnoreCase(errorObject.optString("message")))
+                    || statusCode == 403;
+        }catch (JSONException e){
+            return false;
+        }
+
     }
 
     private void enqueue(JSONArray args, CallbackContext callbackContext) {
@@ -274,6 +276,37 @@ public class SyncPlugin extends CordovaPlugin {
             mHandler.clear();
         }
         mLastEvent = null;
+    }
+
+    private boolean isSameToken(Request request, HttpResponse httpResponse) {
+        String tokenInApp = null;
+        String tokenInRequest = null;
+        if (isApiTokenExpired(httpResponse.getError(), httpResponse.getStatus())) {
+            tokenInApp = "Bearer " + mPreferenceService.getBearerToken();
+            tokenInRequest = request.getHeaders().optString("Authorization");
+        } else {
+            if (mPreferenceService.getUserToken() != null) {
+                tokenInApp = mPreferenceService.getUserToken();
+                tokenInRequest = request.getHeaders().optString("X-Authenticated-User-Token");
+            }
+        }
+        return (tokenInApp != null && tokenInRequest != null && tokenInApp.equalsIgnoreCase(tokenInRequest));
+
+    }
+
+    private void publishAuthErrorEvents(String error, int statusCode) throws JSONException{
+        if (this.mLiveHandler.size() == 0) {
+            return;
+        }
+
+        JSONObject liveJsonObject = new JSONObject();
+        liveJsonObject.put("network_queue_error", isApiTokenExpired(error, statusCode) ? "API_TOKEN_EXPIRED" : "USER_TOKEN_EXPIRED");
+
+        for (CallbackContext callback : this.mLiveHandler) {
+            final PluginResult result = new PluginResult(PluginResult.Status.OK, liveJsonObject);
+            result.setKeepCallback(true);
+            callback.sendPluginResult(result);
+        }
     }
 
 }
