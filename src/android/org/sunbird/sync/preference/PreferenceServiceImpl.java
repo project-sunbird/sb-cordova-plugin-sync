@@ -19,7 +19,7 @@ public class PreferenceServiceImpl implements PreferenceService {
 
     @Override
     public String getBearerToken() {
-        return mSharedPrefs.getString("api_bearer_token", null);
+        return mSharedPrefs.getString("api_bearer_token_v2", null);
     }
 
     @Override

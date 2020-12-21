@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
     id="sb-cordova-plugin-sync"
-    version="0.0.1">
+    version="3.2.0">
     <name>A native  plugin to sync telemetry,assesment and course progress </name>
     <description></description>
     <license>MIT</license>
