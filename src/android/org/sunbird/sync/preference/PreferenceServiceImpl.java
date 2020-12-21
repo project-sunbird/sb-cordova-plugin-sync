@@ -2,9 +2,9 @@ package org.sunbird.sync.preference;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-
 import org.json.JSONException;
 import org.json.JSONObject;
+
 
 /**
  * Created by swayangjit on 9/6/20.
@@ -50,5 +50,15 @@ public class PreferenceServiceImpl implements PreferenceService {
             e.printStackTrace();
             return null;
         }
+    }
+
+    @Override
+    public String getTraceId() {
+        return mSharedPrefs.getString("trace_id", "");
+    }
+
+    @Override
+    public void setTraceId(String traceId) {
+         mSharedPrefs.edit().putString("trace_id", traceId).commit();
     }
 }
