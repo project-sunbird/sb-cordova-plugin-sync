@@ -11,4 +11,8 @@ public interface PreferenceService {
     String getUserToken();
 
     String getManagedUserToken();
+
+    String getTraceId();
+
+    void setTraceId(String traceId);
 }

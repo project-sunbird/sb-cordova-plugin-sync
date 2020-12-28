@@ -23,6 +23,7 @@ import org.sunbird.sync.queue.NetworkQueue;
 import org.sunbird.sync.queue.NetworkQueueImpl;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class echoes a string called from JavaScript.
@@ -39,6 +40,7 @@ public class SyncPlugin extends CordovaPlugin {
     private ArrayList<CallbackContext> mLiveHandler = new ArrayList<>();
     private JSONObject mLastEvent;
     private boolean isUnauthorizedErrorThrown;
+    private String mTraceId;
 
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
@@ -47,6 +49,7 @@ public class SyncPlugin extends CordovaPlugin {
         mNetworkQueue = new NetworkQueueImpl(mDbService);
         mApiService = new ApiServiceImpl();
         mPreferenceService = new PreferenceServiceImpl(cordova.getActivity());
+        this.mTraceId = mPreferenceService.getTraceId();
     }
 
     @Override
@@ -131,8 +134,21 @@ public class SyncPlugin extends CordovaPlugin {
     }
 
     private void handlePostAPIActions(String type, HttpResponse httpResponse) throws JSONException {
+        setupTraceId(httpResponse);
         if (type.equalsIgnoreCase("telemetry")) {
             postProcessTelemetrySync(httpResponse);
+        }
+    }
+
+    private void setupTraceId(HttpResponse httpResponse){
+        if(httpResponse!= null && httpResponse.getHeaders() != null && httpResponse.getHeaders().get("X-Trace-Enabled") != null){
+            List<String> headerList = httpResponse.getHeaders().get("X-Trace-Enabled");
+            if(headerList.size() > 0){
+                String responseTraceId = headerList.get(0);
+                if(responseTraceId != this.mTraceId){
+                    this.mPreferenceService.setTraceId(responseTraceId);
+                }
+            }
         }
     }
 
