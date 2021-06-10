@@ -1,6 +1,8 @@
 import Foundation
+
 // Method for SyncPlugin.
 @objc(SyncPlugin) class SyncPlugin : CordovaPlugin {   
+
 
   // Method for Sync.
  @objc(sync:)
@@ -8,17 +10,20 @@ import Foundation
         
     }
 
+
     // Method for enqueue.
      @objc(enqueue:)
     func enqueue(_ command: CDVInvokedUrlCommand) {
         
     }
 
+
 // Method for onSyncSucces.
      @objc(onSyncSucces:)
     func onSyncSucces(_ command: CDVInvokedUrlCommand) {
         
     }
+
 
     // Method for onAuthorizationError.
      @objc(onAuthorizationError:)
