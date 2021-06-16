@@ -5,7 +5,8 @@
   "cordova": {
     "id": "sb-cordova-plugin-sync",
     "platforms": [
-      "android"
+      "android",
+      "ios"
     ]
   },
   "keywords": [
