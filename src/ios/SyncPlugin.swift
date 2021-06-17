@@ -2,9 +2,16 @@ import Foundation
 
 // Method for SyncPlugin.
 @objc(SyncPlugin) class SyncPlugin : CordovaPlugin {   
-
+ private var DbService:String?
+ private var NetworkQueue:String?
+ private var ApiService:String?
+ private var PreferenceService:String?
+ private var isSyncing:Bool? 
 
   // Method for Sync.
+
+
+
  @objc(sync:)
     func sync(_ command: CDVInvokedUrlCommand) {
         
