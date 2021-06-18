@@ -2,19 +2,16 @@ import Foundation
 
 // Method for SyncPlugin.
 @objc(SyncPlugin) class SyncPlugin : CordovaPlugin {   
- private var DbService:String?
- private var NetworkQueue:String?
- private var ApiService:String?
- private var PreferenceService:String?
- private var isSyncing:Bool? 
-
-
-
 
   // Method for Sync.
 
  @objc(sync:)
     func sync(_ command: CDVInvokedUrlCommand) {
+      //TODO: will implement after undstanding it
+      print("Successfully sync.")
+        let pluginResult:CDVPluginResult = CDVPluginResult.init(status: CDVCommandStatus_OK, messageAs: "Successfully sync")
+        self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+    
         
     }
 
@@ -22,7 +19,15 @@ import Foundation
     // Method for enqueue.
      @objc(enqueue:)
     func enqueue(_ command: CDVInvokedUrlCommand) {
-        
+         var pluginResult:CDVPluginResult = CDVPluginResult.init(status: CDVCommandStatus_ERROR)
+        let data = command.arguments[0] as? String ?? ""
+        let model = command.arguments[1] as? String ?? ""
+        let shouldSync = command.arguments[2] as? String ?? ""
+            print("Start Scanning Successfully.")
+        pluginResult = CDVPluginResult.init(status: CDVCommandStatus_OK, messageAs: "Start Scanning Successfully.")
+        self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+
+
     }
 
 
