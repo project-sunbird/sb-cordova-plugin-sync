@@ -8,9 +8,10 @@ import Foundation
  private var PreferenceService:String?
  private var isSyncing:Bool? 
 
+
+
+
   // Method for Sync.
-
-
 
  @objc(sync:)
     func sync(_ command: CDVInvokedUrlCommand) {
