@@ -39,6 +39,14 @@
             </feature>
         </config-file>
         <source-file src="src/ios/SyncPlugin.swift" />
+        <source-file src="src/ios/db/db.swift" />
+        <source-file src="src/ios/model/HttpResponse.swift" />
+        <source-file src="src/ios/model/NetworkQueueModel.swift" />
+        <source-file src="src/ios/model/request.swift" />
+        <source-file src="src/ios/network/ApiService.swift" />
+        <source-file src="src/ios/network/HttpOperation.swift" />
+        <source-file src="src/ios/preference/preference.swift" />
+        <source-file src="src/ios/queue/NetworkQueue.swift" />
     </platform>
 </plugin>
 
