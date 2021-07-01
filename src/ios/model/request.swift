@@ -1,7 +1,6 @@
 import Foundation
 
-
-class Request {
+public class Request {
     var host: String
     var path: String
     var type: String
@@ -10,7 +9,7 @@ class Request {
     var serializer: String
     var noOfFailureSync: Int
 
-    init(_ host: String, _ path: String, _ type: String, _ headers: [String: Any], _ serializer: [String: Any], _ body: [String: Any]){
+    init(_ host: String, _ path: String, _ type: String, _ headers: [String: Any], _ serializer: String, _ body: [String: Any]){
         self.host = host
         self.path = path
         self.type = type
@@ -35,7 +34,7 @@ class Request {
         return self.headers;
     }
 
-    func setHeaders(headers: [String: Any]) {
+    func setHeaders(_ headers: [String: Any]) {
         self.headers = headers;
     }
 
@@ -55,19 +54,18 @@ class Request {
         self.noOfFailureSync = noOfFailureSync;
     }
 
-    override func toString() -> String {
+    func toString() -> String {
             return "Request{" +
                     "host='" + host + "\'" +
                     ", path='" + path + "\'" +
                     ", type='" + type + "\'" +
                     ", headers=" + headers.toString() +
                     ", body='" + body + "\'" +
-                    ", serializer='" + serializer + "\'" +
-                    "}"
+                    ", serializer='" + serializer + "\' }"
         }
 
-    override func toJSON() -> [String: Any] {
-        var request = [:]
+    func toJSON() -> [String: Any] {
+        var request: [String: Any] = [:]
         request["host"] = host
         request["type"] = type
         request["path"] = path

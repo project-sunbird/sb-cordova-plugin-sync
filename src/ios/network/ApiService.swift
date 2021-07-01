@@ -7,7 +7,7 @@ protocol ApiService {
 public class ApiServiceImpl: ApiService {
 
     private static let TAG: String = "SB-Sync-ApiServiceImpl"
-    private var tlsConfiguration
+    private var tlsConfiguration: Any
 
     init() {
         self.initializeTTLConfiguraion()
