@@ -6,9 +6,9 @@ public class NetworkQueueModel {
     private  var type: String
     private var priority: Int
     private  var eventCount: Int
-    private timestamp: UInt8
-    private var request: Request
-    private var config: String
+    private var timestamp: UInt8
+    public var request: Request
+    private var config: String?
 
     init(_ msgId: String, _ type: String, _ priority: Int, _ timestamp: UInt8, _ config: String, _ eventCount: Int, _ request: Request) {
         self.msgId = msgId
@@ -44,12 +44,11 @@ public class NetworkQueueModel {
         return self.eventCount
     }
 
-    public func getConfig() throws -> [String: Any]? {
+    public func getConfig() -> [String: Any]? {
         if let config = self.config {
             do {
-                if let configJSON = try JSONSerialization.jsonObject(with: config, options: []) {
+                let configJSON = try? JSONSerialization.jsonObject(with: config.data(using: .utf8)!, options: []) as? [String: Any]
                     return configJSON
-                }
             } catch let error {
                 print("Failed to load JSON: \(error)")
                 return nil
@@ -58,7 +57,7 @@ public class NetworkQueueModel {
         return nil
     }
 
-    override public func compareTo(_ networkQueueModel: NetworkQueueModel) -> Int {
+    public func compareTo(_ networkQueueModel: NetworkQueueModel) -> Int {
 
         let currentFailedSyncCount = self.getRequest().getNoOfFailureSync() as! Int
         let failedSyncCount = networkQueueModel.getRequest().getNoOfFailureSync() as! Int
@@ -74,7 +73,7 @@ public class NetworkQueueModel {
         return 0
     }
 
-    override public func toString() -> String {
+    public func toString() -> String {
         return "NetworkQueueModel{" +
                 "msgId='" + self.msgId + "\'" +
                 "}"

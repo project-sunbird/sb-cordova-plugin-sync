@@ -43,7 +43,7 @@ class HttpResponse {
         self.error = message
     }
 
-    public func hasFailed() -> Bool {
+    public func getHasFailed() -> Bool {
         return self.hasFailed
     }
 
@@ -55,7 +55,7 @@ class HttpResponse {
         return self.url
     }
 
-    public func getHeaders() -> [String: [String]]{
+    public func getHeaders() -> [String: String]{
         return self.headers
     }
 
@@ -63,19 +63,20 @@ class HttpResponse {
         return self.body
     }
 
-    public getError() -> String {
+    public func getError() -> String {
         return self.error
     }
 
     public func toJSON() throws -> [String: Any] {
-        let json = [:]
+        var json: [String: Any] = [:]
         json["status"] = self.status
         json["url"] = self.url
-        if let headers = self.headers{
-            if !headers.isEmpty {
-                json["headers"] = getFilteredHeaders()
-            }
-        }
+        //TODO
+//        if let headers = self.headers{
+//            if !headers.isEmpty {
+//                json["headers"] = getFilteredHeaders()
+//            }
+//        }
         if self.hasFailed {
             json["error"] = self.error
         } else if self.isFileOperation {
