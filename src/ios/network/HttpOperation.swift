@@ -13,7 +13,7 @@ public class HttpOperation {
     private var followRedirects: Bool = true
     private var tlsConfiguration: Any
 
-    init(_ method: String, _ url: String, _ serializer: String, _ data: String, _ headers: [String: Any], _ tlsConfiguration: Any) {
+    init(_ method: String, _ url: String, _ serializer: String, _ data: [String: Any], _ headers: [String: Any], _ tlsConfiguration: Any) {
         self.method = method
         self.url = url
         self.serializer = serializer
