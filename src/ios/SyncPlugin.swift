@@ -3,12 +3,12 @@
     @objc(SyncPlugin) class SyncPlugin : CDVPlugin {
         
         private static var TAG: String = "Cordova-Plugin-SYNC"
-        private var mDbService: DbService
-        private var mNetworkQueue: NetworkQueue
-        private var mApiService: ApiService
-        private var mPreferenceService: PreferenceService
-        private var isSyncing: Bool
-        private var isUnauthorizedErrorThrown: Bool
+        private var mDbService: DbService?
+        private var mNetworkQueue: NetworkQueue?
+        private var mApiService: ApiService?
+        private var mPreferenceService: PreferenceService?
+        private var isSyncing: Bool = false
+        private var isUnauthorizedErrorThrown: Bool = false
         
         private var mTraceId: String = ""
         private var mHandler: [Any] = []
@@ -17,10 +17,10 @@
         
         override func pluginInitialize() {
             mDbService = DbServiceImpl()
-            mNetworkQueue = NetworkQueueImpl(mDbService)
+            mNetworkQueue = NetworkQueueImpl(mDbService as! DbService)
             mApiService = ApiServiceImpl()
             mPreferenceService = PreferenceServiceImpl()
-            if let traceId = mPreferenceService.getTraceId() {
+            if let traceId = mPreferenceService!.getTraceId() {
                 self.mTraceId = traceId
             }
         }
@@ -30,57 +30,57 @@
             var pluginResult: CDVPluginResult = CDVPluginResult.init(status: CDVCommandStatus_ERROR)
             
             self.commandDelegate.run(inBackground: {
-                self.mNetworkQueue.seed()
-                while !self.mNetworkQueue.isEmpty() {
+                self.mNetworkQueue!.seed()
+                while !self.mNetworkQueue!.isEmpty() {
                     self.isSyncing = true
-                    let networkQueueModel = self.mNetworkQueue.peek() as? NetworkQueueModel
+                    let networkQueueModel = self.mNetworkQueue!.peek() as? NetworkQueueModel
                     var httpResponse: HttpResponse
                     if networkQueueModel != nil {
-                        httpResponse = self.mApiService.process(networkQueueModel!.getRequest())
-                    }
-                    if httpResponse != nil {
-                        let status = httpResponse.getStatus()
-                        if status >= 200 && status < 300 {
-                            self.handlePostAPIActions(networkQueueModel!.getType(), httpResponse)
-                            self.mNetworkQueue.dequeue(false)
-                            self.publishSuccessResult(networkQueueModel!, httpResponse)
-                        } else if status == 400 {
-                            //                            self.publishEvent("error", "BAD_REQUEST")
-                            self.mNetworkQueue.dequeue(true)
-                            continue
-                        } else if status == 401 || status == 403 {
-                            if networkQueueModel!.getRequest().getNoOfFailureSync() >= 2 {
-                                if !self.isUnauthorizedErrorThrown {
-                                    self.isUnauthorizedErrorThrown = true
-                                    if !self.isSametoken(networkQueueModel!.getRequest(), httpResponse) {
-                                        self.publishAuthErrorEvents(httpResponse.getError(), httpResponse.getStatus())
+                        httpResponse = self.mApiService!.process(networkQueueModel!.getRequest())
+                        if httpResponse != nil {
+                            let status = httpResponse.getStatus()
+                            if status >= 200 && status < 300 {
+                                self.handlePostAPIActions(networkQueueModel!.getType(), httpResponse)
+                                self.mNetworkQueue!.dequeue(false)
+                                self.publishSuccessResult(networkQueueModel!, httpResponse)
+                            } else if status == 400 {
+                                //                            self.publishEvent("error", "BAD_REQUEST")
+                                self.mNetworkQueue!.dequeue(true)
+                                continue
+                            } else if status == 401 || status == 403 {
+                                if networkQueueModel!.getRequest().getNoOfFailureSync() >= 2 {
+                                    if !self.isUnauthorizedErrorThrown {
+                                        self.isUnauthorizedErrorThrown = true
+                                        if !self.isSametoken(networkQueueModel!.getRequest(), httpResponse) {
+                                            self.publishAuthErrorEvents(httpResponse.getError(), httpResponse.getStatus())
+                                        }
+                                        self.handleUnAuthorizedError(networkQueueModel!, httpResponse)
+                                        self.mNetworkQueue!.dequeue(true)
+                                    } else {
+                                        self.handleUnAuthorizedError(networkQueueModel!, httpResponse)
+                                        self.mNetworkQueue!.dequeue(true)
                                     }
-                                    self.handleUnAuthorizedError(networkQueueModel!, httpResponse)
-                                    self.mNetworkQueue.dequeue(true)
+                                    
                                 } else {
+                                    let request = networkQueueModel!.getRequest()
+                                    var noOfFailureSyncs: Int = request.getNoOfFailureSync() + 1
+                                    request.setNoOfFailureSync(noOfFailureSyncs)
+                                    noOfFailureSyncs = noOfFailureSyncs + 1
+                                    let model = ["request": request.toJSON().description]
+                                    // TODO logic to update the DB
                                     self.handleUnAuthorizedError(networkQueueModel!, httpResponse)
-                                    self.mNetworkQueue.dequeue(true)
+                                    self.mNetworkQueue!.dequeue(true)
                                 }
-                                
+                                continue
+                            } else if status == -3 {
+                                //                            self.publishEvent(networkQueueModel!.getType() + "_error", "NETWORK_ERROR")
+                                self.mNetworkQueue!.dequeue(true)
+                                break
                             } else {
-                                let request = networkQueueModel!.getRequest()
-                                var noOfFailureSyncs: Int = request.getNoOfFailureSync() + 1
-                                request.setNoOfFailureSync(noOfFailureSyncs)
-                                noOfFailureSyncs = noOfFailureSyncs + 1
-                                let model = ["request": request.toJSON().description]
-                                // TODO logic to update the DB
-                                self.handleUnAuthorizedError(networkQueueModel!, httpResponse)
-                                self.mNetworkQueue.dequeue(true)
+                                //                            self.publishEvent(networkQueueModel!.getType() + "_error", httpResponse.getError())
+                                self.mNetworkQueue!.dequeue(true)
+                                continue
                             }
-                            continue
-                        } else if status == -3 {
-//                            self.publishEvent(networkQueueModel!.getType() + "_error", "NETWORK_ERROR")
-                            self.mNetworkQueue.dequeue(true)
-                            break
-                        } else {
-//                            self.publishEvent(networkQueueModel!.getType() + "_error", httpResponse.getError())
-                            self.mNetworkQueue.dequeue(true)
-                            continue
                         }
                     }
                 }
@@ -210,16 +210,16 @@
             var headers = request.getHeaders()
             
             if isApiTokenExpired(httpResponse.getError(), httpResponse.getStatus()) {
-                if let token = mPreferenceService.getBearerToken() {
+                if let token = mPreferenceService!.getBearerToken() {
                     headers["Authorization"] = "Bearer " + token
                 }
             } else {
                 
-                if let token = mPreferenceService.getUserToken() {
+                if let token = mPreferenceService!.getUserToken() {
                     headers["X-Authenticated-User-Token"] = token
                 }
                 
-                if let token = mPreferenceService.getManagedUserToken() {
+                if let token = mPreferenceService!.getManagedUserToken() {
                     headers["X-Authenticated-For"] = token
                 }
             }
@@ -246,7 +246,7 @@
                 
                 let responseTraceId = headersList["X-Trace-Enabled"]?.first
                 if responseTraceId != nil && self.mTraceId != responseTraceId {
-                    mPreferenceService.setTraceId(responseTraceId!)
+                    mPreferenceService!.setTraceId(responseTraceId!)
                 }
             }
         }
@@ -280,19 +280,19 @@
         }
         
         private func isSametoken(_ request: Request, _ httpResponse: HttpResponse) -> Bool {
-            var tokenInApp: String, tokenInRequest: String
+            var tokenInApp: String? = nil, tokenInRequest: String? = nil
             if isApiTokenExpired(httpResponse.getError(), httpResponse.getStatus()) {
-                if let token = mPreferenceService.getBearerToken() {
+                if let token = mPreferenceService!.getBearerToken() {
                     tokenInApp = "Bearer " + token
                     tokenInRequest = (request.getHeaders()["Authorization"] as? String)!
                 }
             } else {
-                if let token = mPreferenceService.getUserToken(){
+                if let token = mPreferenceService!.getUserToken(){
                     tokenInApp = token
                     tokenInRequest = (request.getHeaders()["X-Authenticated-User-Token"] as? String)!
                 }
             }
-            return tokenInApp != nil && tokenInRequest != nil && (tokenInApp.lowercased().elementsEqual(tokenInRequest.lowercased()))
+            return tokenInApp != nil && tokenInRequest != nil && (tokenInApp!.lowercased().elementsEqual(tokenInRequest!.lowercased()))
         }
         
         private func isApiTokenExpired(_ error: String, _ statusCode: Int) -> Bool {

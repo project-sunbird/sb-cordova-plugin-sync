@@ -124,7 +124,7 @@ protocol NetworkQueue {
 
 public class NetworkQueueImpl: NetworkQueue {
     
-    private var mPriorityNetworkModelQueue: Heap<NetworkQueueModel>
+    private var mPriorityNetworkModelQueue: Heap<NetworkQueueModel>?
     private var mDbService: DbService
     
     init(_ dbService: DbService){
@@ -151,28 +151,35 @@ public class NetworkQueueImpl: NetworkQueue {
     
     func dequeue(_ isSoft: Bool) -> NetworkQueueModel? {
         if self.mPriorityNetworkModelQueue != nil {
-            let element = self.mPriorityNetworkModelQueue.peek()
+            let element = self.mPriorityNetworkModelQueue!.peek()
             if !isSoft {
                 try? mDbService.delete((element?.getId())!);
             }
             
-            self.mPriorityNetworkModelQueue.dequeue()
+            self.mPriorityNetworkModelQueue!.dequeue()
         }
         
         return nil
     }
     func peek() -> NetworkQueueModel?{
         if self.mPriorityNetworkModelQueue != nil {
-            return mPriorityNetworkModelQueue.peek()
+            return mPriorityNetworkModelQueue!.peek()
         }
-        
         return nil
-        
     }
     func getSize() -> Int {
-        mPriorityNetworkModelQueue.count
+        if self.mPriorityNetworkModelQueue != nil {
+            return self.mPriorityNetworkModelQueue!.count
+        }
+        
+        return 0
     }
     func isEmpty() -> Bool {
-        return mPriorityNetworkModelQueue.isEmpty
+        
+        if self.mPriorityNetworkModelQueue != nil {
+            return mPriorityNetworkModelQueue!.isEmpty
+        }
+        
+        return true
     }
 }

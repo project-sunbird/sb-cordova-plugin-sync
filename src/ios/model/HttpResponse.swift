@@ -55,7 +55,7 @@ class HttpResponse {
         return self.url
     }
 
-    public func getHeaders() -> [String: String]{
+    public func getHeaders() -> [String: [String]]{
         return self.headers
     }
 
