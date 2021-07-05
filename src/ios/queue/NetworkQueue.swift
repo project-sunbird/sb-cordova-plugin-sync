@@ -134,23 +134,49 @@ public class NetworkQueueImpl: NetworkQueue {
     private func priorityFunction(_ element1: NetworkQueueModel, _ element2: NetworkQueueModel) -> Bool {
         let element1Priority = element1.getPriority()
         let element2Priority = element2.getPriority()
-        return element1Priority > element2Priority
+        
+        let element2FailedCount = element2.getFailedCount()
+        let element1FailedCount = element1.getFailedCount()
+        
+        return (Int(element1Priority) + element1FailedCount) < (Int(element2Priority) + element2FailedCount)
     }
     
     public func seed(){
-        do {
-            let resultArray = try mDbService.seed() as? [NetworkQueueModel]
-            if resultArray != nil && resultArray?.count ?? 0 > 0 {
-                self.mPriorityNetworkModelQueue = Heap(elements: [], priorityFunction: self.priorityFunction)
+        let result = self.mDbService.seed()
+        if result.count > 0 {
+            var elements: [NetworkQueueModel] = []
+            for row in result {
+                let msgId = row["msg_id"] as? String
+                let type = row["type"] as? String
+                let priority = row["priority"] as? Int64
+                let eventCount = row["item_count"] as? Int64
+                let timestamp = row["timestamp"] as? Int64
+                var configJson: [String: Any] = [:]
+                var requestJson: [String: Any] = [:]
+                var failedCount = 0
+                
+                if let config = row["config"] as? String {
+                    configJson = try! JSONSerialization.jsonObject(with: (config.data(using: .utf8))!, options: .allowFragments) as! [String: Any]
+                }
+                
+                if let request = row["request"] as? String {
+                    requestJson = try! JSONSerialization.jsonObject(with: (request.data(using: .utf8))!, options: .allowFragments) as! [String: Any]
+                    
+                    if let noOfFailureSync = requestJson["noOfFailureSync"] as? Int {
+                        failedCount = noOfFailureSync
+                    }
+                }
+                
+                let networkQueueModel = NetworkQueueModel(msgId!, type!, priority!, timestamp!, configJson, eventCount!, requestJson, failedCount)
+                elements.append(networkQueueModel)
             }
-            
-        } catch let error {
-            print("Error from seed method: NetworkQueue \(error)")
+            self.mPriorityNetworkModelQueue = Heap(elements: elements, priorityFunction: self.priorityFunction)
         }
+        
     }
     
     func dequeue(_ isSoft: Bool) -> NetworkQueueModel? {
-        if self.mPriorityNetworkModelQueue != nil {
+        if self.mPriorityNetworkModelQueue != nil && self.mPriorityNetworkModelQueue!.count > 0 {
             let element = self.mPriorityNetworkModelQueue!.peek()
             if !isSoft {
                 try? mDbService.delete((element?.getId())!);
@@ -161,8 +187,8 @@ public class NetworkQueueImpl: NetworkQueue {
         
         return nil
     }
-    func peek() -> NetworkQueueModel?{
-        if self.mPriorityNetworkModelQueue != nil {
+    func peek() -> NetworkQueueModel? {
+        if self.mPriorityNetworkModelQueue != nil  && self.mPriorityNetworkModelQueue!.count > 0 {
             return mPriorityNetworkModelQueue!.peek()
         }
         return nil

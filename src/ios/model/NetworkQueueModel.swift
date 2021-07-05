@@ -4,13 +4,14 @@ public class NetworkQueueModel {
 
     private var msgId: String
     private  var type: String
-    private var priority: Int
-    private  var eventCount: Int
-    private var timestamp: UInt8
-    public var request: Request
-    private var config: String?
+    private var priority: Int64
+    private  var eventCount: Int64
+    private var timestamp: Int64
+    public var request: [String: Any]
+    private var config: [String: Any]?
+    private var failedCount = 0
 
-    init(_ msgId: String, _ type: String, _ priority: Int, _ timestamp: UInt8, _ config: String, _ eventCount: Int, _ request: Request) {
+    init(_ msgId: String, _ type: String, _ priority: Int64, _ timestamp: Int64, _ config: [String: Any], _ eventCount: Int64, _ request: [String: Any], _ failedCount : Int) {
         self.msgId = msgId
         self.type = type
         self.priority = priority
@@ -18,67 +19,45 @@ public class NetworkQueueModel {
         self.request = request
         self.config = config
         self.eventCount = eventCount
+        self.failedCount = failedCount
     }
 
     public func getId() -> String {
         return self.msgId
+    }
+    
+    public func getFailedCount() -> Int {
+        return self.failedCount
+    }
+    
+    public func setFailedCount(_ count: Int) {
+        self.failedCount = count
     }
 
     public func getType() -> String {
         return self.type
     }
 
-    public func getPriority() -> Int {
+    public func getPriority() -> Int64 {
         return self.priority
     }
 
-    public func getTimestamp() -> UInt8{
+    public func getTimestamp() -> Int64{
         return self.timestamp
     }
 
-    public func getRequest() -> Request {
+    public func getRequest() -> [String: Any] {
         return self.request
     }
 
-    public func getEventCount() -> Int {
+    public func getEventCount() -> Int64 {
         return self.eventCount
     }
 
     public func getConfig() -> [String: Any]? {
         if let config = self.config {
-            do {
-                let configJSON = try? JSONSerialization.jsonObject(with: config.data(using: .utf8)!, options: []) as? [String: Any]
-                    return configJSON
-            } catch let error {
-                print("Failed to load JSON: \(error)")
-                return nil
-            }
+            return config
         }
         return nil
     }
-
-    public func compareTo(_ networkQueueModel: NetworkQueueModel) -> Int {
-
-        let currentFailedSyncCount = self.getRequest().getNoOfFailureSync() as! Int
-        let failedSyncCount = networkQueueModel.getRequest().getNoOfFailureSync() as! Int
-
-        let currentPriority = self.getPriority() + currentFailedSyncCount
-        let priority = networkQueueModel.getPriority() + failedSyncCount
-
-        if (priority < currentPriority) {
-            return 1
-        } else if (priority > currentPriority) {
-            return -1
-        }
-        return 0
-    }
-
-    public func toString() -> String {
-        return "NetworkQueueModel{" +
-                "msgId='" + self.msgId + "\'" +
-                "}"
-    }
-
 }
-
-//TODO needs to check the comparable interface implementation in swift
