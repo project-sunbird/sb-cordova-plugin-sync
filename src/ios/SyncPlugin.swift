@@ -39,10 +39,12 @@
         
         @objc
         func sync(_ command: CDVInvokedUrlCommand) {
+            let dispatchGroup = DispatchGroup()
+
             var pluginResult: CDVPluginResult = CDVPluginResult.init(status: CDVCommandStatus_ERROR)
             self.commandDelegate.run(inBackground: {
                 self.mNetworkQueue?.seed()
-                if !self.mNetworkQueue!.isEmpty() {
+                while !self.mNetworkQueue!.isEmpty() {
                     self.isSyncing = false
                     if let networkQueueModel = self.mNetworkQueue!.peek() {
                         let request = networkQueueModel.getRequest()
@@ -51,10 +53,8 @@
                             var urlRequest = URLRequest(url: url)
                             urlRequest.httpMethod = type
                             
-//                            if let body = request["body"] as? String {
-//                                let parameters = body.data(using: .utf8)
-//                                urlRequest.httpBody = parameters
-//                            }
+
+                            
                             
                             // TODO need to check why Accept and Content-Type headers fail
                             
@@ -80,9 +80,11 @@
                                             self.handlePostAPIActions(networkQueueModel.getType(), response, responseJSON)
                                             self.mNetworkQueue?.dequeue(false)
                                             self.publishSuccessResult(networkQueueModel, responseJSON)
+                                            dispatchGroup.leave()
                                         } else if statusCode == 400 {
                                             self.publishEvent("error", "BAD_REQUEST")
                                             self.mNetworkQueue?.dequeue(true)
+                                            dispatchGroup.leave()
                                         } else if statusCode == 403 || statusCode == 401 {
                                             let failedCount = networkQueueModel.getFailedCount()
                                             if failedCount >= 2  {
@@ -107,15 +109,18 @@
                                                 self.mDbService?.update("msg_id", [networkQueueModel.getId()], ["request": self.stringifyJSON(request)])
                                                 self.mNetworkQueue?.dequeue(true)
                                             }
+                                            dispatchGroup.leave()
                                         } else if statusCode == -3 {
                                             let type = networkQueueModel.getType()
                                             self.publishEvent(type + "_error", "NETWORK_ERROR")
                                             self.mNetworkQueue?.dequeue(true)
+                                            dispatchGroup.leave()
                                         } else {
                                             let type = networkQueueModel.getType()
                                             //TODO get error from response
                                             self.publishEvent(type + "_error", "NETWORK_ERROR")
                                             self.mNetworkQueue?.dequeue(true)
+                                            dispatchGroup.leave()
                                         }
                                     }
                                 } catch let error {
@@ -123,7 +128,9 @@
                                     self.isSyncing = false
                                 }
                             })
+                            dispatchGroup.enter()
                             task.resume()
+                            dispatchGroup.wait()
                         }
                     }
                 }
