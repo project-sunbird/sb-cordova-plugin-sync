@@ -53,10 +53,15 @@
                             var urlRequest = URLRequest(url: url)
                             urlRequest.httpMethod = type
                             
-
-                            
-                            
-                            // TODO need to check why Accept and Content-Type headers fail
+                            if let requestBody = request["body"]{
+                                if let serializer = request["serializer"] as? String {
+                                    if serializer.lowercased().elementsEqual("raw") {
+                                        urlRequest.httpBody = Data(base64Encoded: requestBody as! String)
+                                    } else if serializer.lowercased().elementsEqual("json") {
+                                        urlRequest.httpBody = self.stringifyJSON(requestBody as! [String: Any])?.data(using: .utf8)
+                                    }
+                                }
+                            }
                             
                             if let headers = request["headers"] as? [String: String] {
                                 for (key, value) in headers {
@@ -151,7 +156,15 @@
                 if let networkRequest = request["request"] as? String {
                     do {
                         var networkRequestObject = try? JSONSerialization.jsonObject(with: networkRequest.data(using: .utf8)!, options: .allowFragments) as? [String: Any]
-                        networkRequestObject?["body"] = String(decoding: data as! NSData, as: UTF8.self)
+                        
+                        if let serializer = networkRequestObject!["serializer"] as? String {
+                            if serializer.lowercased().elementsEqual("raw") {
+                                networkRequestObject?["body"] = (data as! NSData).base64EncodedString(options: [])
+                            } else if serializer.lowercased().elementsEqual("json") {
+                                networkRequestObject?["body"] = data as! [String: Any]
+                            }
+                        }
+                        
                         if let networkRequestObjectStringified = self.stringifyJSON(networkRequestObject!) {
                             request["request"] = networkRequestObjectStringified
                             if let _ = self.mDbService?.insert(request) {
