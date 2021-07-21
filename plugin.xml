@@ -32,5 +32,17 @@
        <source-file src="src/android/org/sunbird/sync/preference/PreferenceService.java" target-dir="src/org/sunbird/sync/preference" />
        <source-file src="src/android/org/sunbird/sync/preference/PreferenceServiceImpl.java" target-dir="src/org/sunbird/sync/preference" />
     </platform>
+    <platform name="ios">
+        <config-file target="config.xml" parent="/*">
+            <feature name="sbsync">
+                <param name="ios-package" value="SyncPlugin" />
+            </feature>
+        </config-file>
+        <source-file src="src/ios/SyncPlugin.swift" />
+        <source-file src="src/ios/db/db.swift" />
+        <source-file src="src/ios/model/NetworkQueueModel.swift" />
+        <source-file src="src/ios/preference/preference.swift" />
+        <source-file src="src/ios/queue/NetworkQueue.swift" />
+    </platform>
 </plugin>
 
