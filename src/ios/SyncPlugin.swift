@@ -155,7 +155,7 @@
             self.commandDelegate.run(inBackground: {
                 if let networkRequest = request["request"] as? String {
                     do {
-                        var networkRequestObject = try? JSONSerialization.jsonObject(with: networkRequest.data(using: .utf8)!, options: .allowFragments) as? [String: Any]
+                        var networkRequestObject = try JSONSerialization.jsonObject(with: networkRequest.data(using: .utf8)!, options: .allowFragments) as? [String: Any]
                         
                         if let serializer = networkRequestObject!["serializer"] as? String {
                             if serializer.lowercased().elementsEqual("raw") {

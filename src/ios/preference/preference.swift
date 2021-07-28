@@ -28,7 +28,7 @@ class PreferenceServiceImpl: PreferenceService{
         if let oauthToken = oauthToken {
             do {
                 
-                var oauthTokenJson = try? JSONSerialization.jsonObject(with: oauthToken.data(using: .utf8)!, options: .allowFragments) as? [String: Any]
+                var oauthTokenJson = try JSONSerialization.jsonObject(with: oauthToken.data(using: .utf8)!, options: .allowFragments) as? [String: Any]
                 
                 guard let access_token = oauthTokenJson?["access_token"] else {
                     return nil
@@ -47,7 +47,7 @@ class PreferenceServiceImpl: PreferenceService{
         let oauthToken = mSharedPrefs?.string(forKey: "oauth_token")
         if let oauthToken = oauthToken {
             do {
-                var oauthTokenJson = try? JSONSerialization.jsonObject(with: oauthToken.data(using: .utf8)!, options: .allowFragments) as? [String: Any]
+                var oauthTokenJson = try JSONSerialization.jsonObject(with: oauthToken.data(using: .utf8)!, options: .allowFragments) as? [String: Any]
                 
                 guard let managed_access_token = oauthTokenJson?["managed_access_token"] else {
                     return nil
