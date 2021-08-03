@@ -210,7 +210,7 @@
                     if let isDeviceRegisterSuccesfull = isDeviceRegisterSuccesfullDBObj["value"] as? String {
                         if isDeviceRegisterSuccesfull.lowercased().elementsEqual("false") {
                             if let ets = httpResponse["ets"] {
-                                let serverTime = UInt64((ets as! String))!
+                                let serverTime = (ets as! NSNumber).uint64Value
                                 let now = UInt64(Date().timeIntervalSince1970)
                                 let currentOffset = serverTime - now
                                 let allowedOffset = currentOffset > 86400000 ? currentOffset : 0
