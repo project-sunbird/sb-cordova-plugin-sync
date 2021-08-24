@@ -66,9 +66,9 @@
                             if let headers = request["headers"] as? [String: String] {
                                 for (key, value) in headers {
                                     print(key, value)
-                                    if !["Accept", "Content-Type"].contains(key) {
+                                    // if !["Accept", "Content-Type"].contains(key) {
                                         urlRequest.addValue(value, forHTTPHeaderField: key)
-                                    }
+                                    // }
                                 }
                             }
                         
