@@ -107,9 +107,16 @@ class DbServiceImpl : DbService {
             }
         }
 
-        guard sqlite3_step(statement) == SQLITE_DONE else {
-            print("Error message: \(String(cString: sqlite3_errmsg(db)!)) Code:  \(sqlite3_errcode(db)) Method: Insert")
-            return nil
+        for i in 1...3 {
+            // print(i)
+            // print("i Value")
+            guard sqlite3_step(statement) == SQLITE_DONE else {
+                print("Error message: \(String(cString: sqlite3_errmsg(db)!)) Code:  \(sqlite3_errcode(db)) Method: Insert")
+                if (i == 3) {
+                    return nil
+                }
+                continue
+            }
         }
         
         let rowId = sqlite3_last_insert_rowid(db)
@@ -175,10 +182,17 @@ class DbServiceImpl : DbService {
            }
            valueIndex += 1
         }
-        guard sqlite3_step(statement) == SQLITE_DONE  else {
-            print("Error message: \(String(cString: sqlite3_errmsg(db)!)) Code:  \(sqlite3_errcode(db)) Method: Update")
-            return nil
-        }
+        for i in 1...3 {
+            // print(i)
+            // print("i Value")
+            guard sqlite3_step(statement) == SQLITE_DONE else {
+                print("Error message: \(String(cString: sqlite3_errmsg(db)!)) Code:  \(sqlite3_errcode(db)) Method: Insert")
+                if (i == 3) {
+                    return nil
+                }
+                continue
+            }
+        }        
         let updatedCount  = sqlite3_changes(db)
         print("Updated count: ", updatedCount)
         sqlite3_finalize(statement)
